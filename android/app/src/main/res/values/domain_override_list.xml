@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="domain_override_list">@array/domain_override_list</integer>
+    <array name="domain_override_list">
+        <item>cleartext</item>
+    </array>
+</resources>
