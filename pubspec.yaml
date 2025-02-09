@@ -16,11 +16,14 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  camera_details:
+    path: ../../Packages/camera_details
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
   flutter_inappwebview: ^6.1.5
   permission_handler: ^11.3.1
+  url_launcher: ^6.3.1
   webview_flutter: ^4.10.0
 
 dev_dependencies:
@@ -39,8 +42,7 @@ flutter:
   uses-material-design: true
   # To add assets to your application, add an assets section, like this:
   # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  #   - assets/web_view/
   # fonts:
   #   - family: Schyler
   #     fonts:

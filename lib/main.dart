@@ -1,119 +1,92 @@
+import 'dart:async';
+import 'package:camera_details/camera_details.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:webview_flutter/webview_flutter.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-void main() {
-  runApp(const MyApp());
+Future main() async {
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: MyApp(),
+  ));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const FaceRecognition(),
-    );
-  }
+  State<MyApp> createState() => _MyAppState();
 }
 
-class FaceRecognition extends StatefulWidget {
-  const FaceRecognition({super.key});
+class _MyAppState extends State<MyApp> {
+  PullToRefreshController? pullToRefreshController;
 
-  @override
-  State<FaceRecognition> createState() => _FaceRecognitionState();
-}
-
-class _FaceRecognitionState extends State<FaceRecognition> {
-  late WebViewController _webViewController;
+  InAppWebViewController? webViewController;
+  InAppWebViewSettings settings = InAppWebViewSettings(
+    mediaPlaybackRequiresUserGesture: false,
+    allowsInlineMediaPlayback: true,
+    iframeAllow: "camera; microphone",
+    supportZoom: false,
+    iframeAllowFullscreen: true,
+  );
 
   @override
   void initState() {
     super.initState();
-    initWebViewController();
+
+    _initPullToRefreshController();
   }
 
-  void initWebViewController() {
-    _webViewController = WebViewController()
-      ..clearCache()
-      ..enableZoom(false)
-      ..setOnConsoleMessage(
-        (message) {
-          print("message: ${message.message}");
-        },
-      )
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageStarted: (url) async {
-            await Permission.camera.request();
-          },
-          onNavigationRequest: (NavigationRequest request) {
-            print("URL: ${request.url}");
+  void _initPullToRefreshController() async {
+    pullToRefreshController = PullToRefreshController(
+      settings: PullToRefreshSettings(
+        color: Colors.blue,
+      ),
+      onRefresh: () async {
+        if (defaultTargetPlatform == TargetPlatform.android) {
+          webViewController?.reload();
+        } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+          webViewController?.loadUrl(
+              urlRequest: URLRequest(url: await webViewController?.getUrl()));
+        }
+      },
+    );
 
-            return NavigationDecision.navigate;
-          },
-        ),
-      )
-      ..loadRequest(Uri.parse("https://ibraheem-fatayer.github.io/face"));
+    String? x = await CameraDetails().getPlatformVersion();
+    print("Result: $x");
+  }
+
+  @override
+  void dispose() {
+    pullToRefreshController?.dispose();
+
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      child: SafeArea(
-        child: WebViewWidget(controller: _webViewController),
-      ),
+      child: Scaffold(
+          body: InAppWebView(
+        initialUrlRequest: URLRequest(
+          url: WebUri("https://fcf7beb83f84.ngrok.app/"),
+        ),
+        initialSettings: settings,
+        pullToRefreshController: pullToRefreshController,
+        onWebViewCreated: (controller) {
+          webViewController = controller;
+        },
+        onLoadStop: (controller, url) async {
+          pullToRefreshController?.endRefreshing();
+        },
+        onPermissionRequest: (controller, request) async {
+          return PermissionResponse(
+            resources: request.resources,
+            action: PermissionResponseAction.GRANT,
+          );
+        },
+      )),
     );
   }
 }
-
-
-// class FaceRecognition extends StatelessWidget {
-//   const FaceRecognition({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       body: InAppWebView(
-//         initialUrlRequest:
-//             URLRequest(url: Uri.parse('http://192.168.3.211:5000')),
-//         initialOptions: InAppWebViewGroupOptions(
-//           crossPlatform: InAppWebViewOptions(
-//             mediaPlaybackRequiresUserGesture: false,
-//             javaScriptEnabled: true,
-//             useShouldOverrideUrlLoading: true,
-//           ),
-//           // android: AndroidInAppWebViewOptions(
-//           //   useHybridComposition: true,
-//           //   domStorageEnabled: true,
-//           //   allowContentAccess: true,
-//           //   allowFileAccess: true,
-//           //   useWideViewPort: false,
-//           //   loadWithOverviewMode: true,
-//           //   databaseEnabled: true,
-//           //   supportMultipleWindows: true,
-//           // ),
-//           // ios: InAppWebViewSettings (),
-//         ),
-//         onWebViewCreated: (controller) async {
-//           // Request camera permission when WebView is created
-//           await Permission.camera.request();
-//         },
-//         onPermissionRequest: (controller, permissionRequest) async {
-//           return PermissionResponse(
-//             resources: controller.,
-//             action: PermissionResponseAction.GRANT,
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
